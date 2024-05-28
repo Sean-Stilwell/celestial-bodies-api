@@ -1,7 +1,18 @@
 import psycopg2
-import os
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 from flask import Flask, jsonify
 from flask_restx import Api, Resource, fields
+
+KEY_VAULT_URL = "https://fsdh-proj-dw1-poc-kv.vault.azure.net/"
+credential = DefaultAzureCredential()
+secret_client = SecretClient(vault_url=KEY_VAULT_URL, credential=credential)
+
+# Retrieve the secrets containing DB connection details
+DB_NAME = "fsdh"
+DB_HOST = secret_client.get_secret("datahub-psql-server").value
+DB_USER = secret_client.get_secret("datahub-psql-admin").value
+DB_PASS = secret_client.get_secret("datahub-psql-password").value
 
 app = Flask(__name__)
 api = Api(app, version='1.0', title='Sample FSDH API | Exemple d\'API DHSF',
@@ -20,11 +31,12 @@ celestial_body_model = api.model('CelestialBody', {
 })
 
 def get_db_connection():
+    '''Connect to the PostgreSQL database | Se connecter à la base de données PostgreSQL'''
     conn = psycopg2.connect(
-        host=os.environ['DB_HOST'],
-        database=os.environ['DB_NAME'],
-        user=os.environ['DB_USER'],
-        password=os.environ['DB_PASSWORD']
+        host = DB_HOST,
+        database = DB_NAME,
+        user = DB_USER,
+        password = DB_PASS
     )
     return conn
 
@@ -63,7 +75,6 @@ class CelestialBodyList(Resource):
         data = api.payload  # This contains the data sent by the client
         conn = get_db_connection()
         cur = conn.cursor()
-        #query = f"INSERT INTO celestial_bodies (name, body_type, mean_radius_km, mass_kg, distance_from_sun_km) VALUES ('{data['name']}', '{data['body_type']}', {data['mean_radius']}, {data['mass']}, {data['distance_from_sun']})"
         cur.execute('INSERT INTO celestial_bodies (name, body_type, mean_radius_km, mass_kg, distance_from_sun_km) VALUES (%s, %s, %s, %s, %s)', (data['name'], data['body_type'], data['mean_radius_km'], data['mass_kg'], data['distance_from_sun_km']))
         conn.commit()
         return {"message": "Celestial body created successfully | Corps céleste créé avec succès"}, 201
@@ -111,4 +122,4 @@ class CelestialBodyList(Resource):
         return {'message': 'Celestial body deleted successfully | Corps céleste mis à jour avec succès'}, 200
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=8080)
