@@ -1,6 +1,7 @@
 version: '3.8'
 services:
   web:
+    image: "python:3.8-slim-buster"
     build: .
     ports:
       - "8080:8080"
