@@ -1,12 +1,11 @@
 version: '3.8'
 services:
   web:
-    build: .
+    image: python:3.9-slim
+    container_name: flask-api
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: bash -c "pip install --no-cache-dir -r requirements.txt && python app.py"
     ports:
       - "8080:8080"
-    environment:
-      - DB_HOST=${DB_HOST}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-    restart: always
