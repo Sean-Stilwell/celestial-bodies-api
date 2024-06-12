@@ -3,7 +3,7 @@ version: '3.8'
 services:
   web:
     build: .
-    image: ghcr.io/ssc-sp/fsdh-flask-api-sample:latest
+    image: seanstilwell/flask-app-2:latest
     container_name: flask-app
     ports:
       - "80:80"
